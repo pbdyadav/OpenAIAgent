@@ -15,14 +15,15 @@ export async function GET(request: NextRequest) {
   if (mode === "subscribe" && token && challenge) {
     // Find the company with this verify token
     const supabase = await createClient();
-    const { data: config } = await supabase
+    const { data: config, error } = await supabase
       .from("whatsapp_config")
       .select("*")
-      .eq("verify_token", token)
-      .single();
+      .eq("verify_token", token);
 
-    if (config) {
-      // Token matches, return the challenge
+    console.log("DB Result:", config);
+    console.log("DB Error:", error);
+
+    if (config && config.length > 0) {
       return new NextResponse(challenge, { status: 200 });
     }
   }
