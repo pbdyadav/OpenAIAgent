@@ -1,34 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-// Webhook verification (GET request from Meta)
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  console.log("Mode:", mode);
-  console.log("Token received:", token);
-  console.log("Challenge:", challenge);
+  const VERIFY_TOKEN = "openai_imalag_whatsapp_verify_2026";
 
-  if (mode === "subscribe" && token && challenge) {
-    // Find the company with this verify token
-    const supabase = await createClient();
-    const { data: config, error } = await supabase
-      .from("whatsapp_config")
-      .select("*")
-      .eq("verify_token", token);
-
-    console.log("DB Result:", config);
-    console.log("DB Error:", error);
-
-    if (config && config.length > 0) {
-      return new NextResponse(challenge, { status: 200 });
-    }
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    console.log("Webhook verified");
+    return new Response(challenge, { status: 200 });
   }
 
-  return new NextResponse("Forbidden", { status: 403 });
+  return new Response("Forbidden", { status: 403 });
 }
 
 // Incoming messages (POST request from Meta)
