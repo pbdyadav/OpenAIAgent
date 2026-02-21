@@ -8,6 +8,10 @@ export async function GET(request: NextRequest) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
+  console.log("Mode:", mode);
+  console.log("Token received:", token);
+  console.log("Challenge:", challenge);
+
   if (mode === "subscribe" && token && challenge) {
     // Find the company with this verify token
     const supabase = await createClient();
