@@ -1,130 +1,137 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+export const runtime = "nodejs";
 
-export async function POST(request: NextRequest) {
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { GoogleGenerativeAI, Content } from "@google/generative-ai";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
+export async function POST(req: Request) {
   try {
-    const { companySlug, message, visitorId, conversationId } = await request.json();
+    const body = await req.json();
+    const { companySlug, message, visitorId } = body;
 
     if (!companySlug || !message || !visitorId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing fields" }, { status: 400, headers: corsHeaders });
     }
 
     const supabase = await createClient();
 
-    // Find company by slug
-    const { data: company } = await supabase
+    // 1. Find Company
+    const { data: company, error: companyError } = await supabase
       .from("companies")
       .select("*")
       .eq("slug", companySlug)
-      .single();
+      .maybeSingle();
 
-    if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    if (companyError || !company) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404, headers: corsHeaders });
     }
 
-    // Get knowledge base documents
-    const { data: documents } = await supabase
-      .from("knowledge_documents")
-      .select("content")
+    // 2. Get/Create Conversation
+    let { data: conversation } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("visitor_id", visitorId)
       .eq("company_id", company.id)
-      .eq("status", "processed");
-
-    const knowledgeBase = documents?.map((d) => d.content).join("\n\n") || "";
-
-    // Find or create conversation
-    let conversation;
-    if (conversationId) {
-      const { data } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("id", conversationId)
-        .eq("company_id", company.id)
-        .single();
-      conversation = data;
-    }
+      .maybeSingle();
 
     if (!conversation) {
-      const { data: newConv } = await supabase
+      const { data: newConv, error: createError } = await supabase
         .from("conversations")
-        .insert({
-          company_id: company.id,
-          visitor_id: visitorId,
-          channel: "web",
-          status: "active",
-        })
+        .insert({ company_id: company.id, visitor_id: visitorId, channel: "website" })
         .select()
         .single();
+
+      if (createError) throw createError;
       conversation = newConv;
     }
 
-    if (!conversation) {
-      return NextResponse.json(
-        { error: "Failed to create conversation" },
-        { status: 500 }
-      );
-    }
+    const currentConvId = conversation!.id;
 
-    // Save user message
+    // 3. Save User Message
     await supabase.from("messages").insert({
       company_id: company.id,
-      conversation_id: conversation.id,
+      conversation_id: currentConvId,
       role: "user",
       content: message,
     });
 
-    // Get conversation history
-    const { data: history } = await supabase
-      .from("messages")
-      .select("role, content")
-      .eq("conversation_id", conversation.id)
-      .order("created_at", { ascending: true })
-      .limit(20);
+    // DEBUG: Yeh line check karein ki API key ko kya models dikh rahe hain
+    try {
+      const modelListRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
+      const modelListData = await modelListRes.json();
+      console.log("AVAILABLE MODELS:", JSON.stringify(modelListData.models.map((m: any) => m.name)));
+    } catch (e) {
+      console.log("Could not fetch models");
+    }
+    // 4. Gemini SDK Setup
+    let aiResponse = "I'm currently unavailable.";
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // Build AI prompt
-    const welcomeMessage = company.settings?.welcome_message || "Hi! How can I help you today?";
-    const personality = company.settings?.ai_personality || "helpful and professional";
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is missing in .env.local");
+    } else {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
 
-    const systemPrompt = `You are a ${personality} AI assistant for ${company.name}. 
-Your job is to help customers by answering their questions based on the following knowledge base.
-If you don't know the answer from the knowledge base, politely say you don't have that information and suggest they contact the company directly.
+        // Fetch History for Context BEFORE sending new message
+        const { data: historyData } = await supabase
+          .from("messages")
+          .select("role, content")
+          .eq("conversation_id", currentConvId)
+          .order("created_at", { ascending: true })
+          .limit(10);
 
-Knowledge Base:
-${knowledgeBase || "No knowledge base documents have been uploaded yet."}
+        // Convert history to Gemini format
+        const chatHistory: Content[] = (historyData || [])
+          .filter(m => m.content !== message) // Naya message history mein repeat na ho
+          .map(m => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }],
+          }));
 
-Remember to be ${personality} in all your responses.`;
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+          systemInstruction: `You are a helpful AI assistant for ${company.name}.`,
+        });
 
-    // TODO: Integrate with Google AI Studio
-    // For now, return a simple response
-    const aiResponse = knowledgeBase 
-      ? `Thank you for your question about "${message.substring(0, 50)}...". Based on our knowledge base, I'll do my best to help you. However, full AI responses will be available once Google AI Studio integration is complete.`
-      : "Thank you for reaching out! Our knowledge base is still being set up. Please check back soon or contact us directly for assistance.";
+        const chat = model.startChat({
+          history: chatHistory,
+        });
 
-    // Save AI response
+        const result = await chat.sendMessage(message);
+        aiResponse = result.response.text();
+
+      } catch (err: any) {
+        console.error("Gemini Error:", err);
+        aiResponse = "I am having trouble connecting to my brain. Error: " + err.message;
+      }
+    }
+
+    // 5. Save AI Response
     await supabase.from("messages").insert({
       company_id: company.id,
-      conversation_id: conversation.id,
+      conversation_id: currentConvId,
       role: "assistant",
       content: aiResponse,
     });
 
-    // Update conversation timestamp
-    await supabase
-      .from("conversations")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", conversation.id);
-
-    return NextResponse.json({
-      response: aiResponse,
-      conversationId: conversation.id,
-    });
-  } catch (error) {
-    console.error("[v0] Chat API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { response: aiResponse, conversationId: currentConvId },
+      { headers: corsHeaders }
     );
+
+  } catch (error: any) {
+    console.error("Full Error Log:", error);
+    return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }
 }
