@@ -26,11 +26,11 @@ import { FileText, Trash2, Calendar, HardDrive, FolderOpen, CheckCircle2 } from 
 
 interface Document {
   id: string;
-  title: string;
+  file_name: string;
   content: string;
   file_type: string;
   file_size: number;
-  status: string;
+  processed: boolean;
   created_at: string;
 }
 
@@ -131,8 +131,8 @@ export function DocumentList({ documents, companyId }: DocumentListProps) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-foreground truncate">{doc.title}</h4>
-                      {doc.status === "processed" && (
+                      <h4 className="font-medium text-foreground truncate">{doc.file_name}</h4>
+                      {doc.processed && (
                         <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
                       )}
                     </div>
@@ -168,7 +168,7 @@ export function DocumentList({ documents, companyId }: DocumentListProps) {
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-foreground">Delete document?</AlertDialogTitle>
                       <AlertDialogDescription className="text-muted-foreground">
-                        This will permanently delete &quot;{doc.title}&quot; from your
+                        This will permanently delete &quot;{doc.file_name}&quot; from your
                         knowledge base. This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>

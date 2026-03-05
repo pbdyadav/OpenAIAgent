@@ -30,7 +30,15 @@
     const message = prompt("Ask something:");
     if (!message) return;
 
-    fetch("http://localhost:3010/api/chat", {
+    const visitorId =
+      localStorage.getItem("agenthub_visitor") ||
+      (function () {
+        const id = crypto.randomUUID();
+        localStorage.setItem("agenthub_visitor", id);
+        return id;
+      })();
+
+    fetch("https://openai.imalag.com/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,7 +46,7 @@
       body: JSON.stringify({
         companySlug,
         message,
-        visitorId: "test-user",
+        visitorId,
         conversationId,
       }),
     })

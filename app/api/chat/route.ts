@@ -65,14 +65,37 @@ export async function POST(req: Request) {
       content: message,
     });
 
+    // 3.5 Fetch Company Knowledge
+    const { data: knowledgeDocs } = await supabase
+      .from("knowledge_documents")
+      .select("content")
+      .eq("company_id", company.id)
+      .eq("processed", true);
+
+    let companyKnowledge = "";
+
+    if (knowledgeDocs && knowledgeDocs.length > 0) {
+      companyKnowledge = knowledgeDocs
+        .map(doc => doc.content)
+        .join("\n\n---\n\n")
+        .slice(0, 15000); // token safety limit
+    }
+
     // DEBUG: Yeh line check karein ki API key ko kya models dikh rahe hain
     try {
       const modelListRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
       const modelListData = await modelListRes.json();
-      console.log("AVAILABLE MODELS:", JSON.stringify(modelListData.models.map((m: any) => m.name)));
+
+      console.log("KNOWLEDGE LENGTH:", companyKnowledge.length);
+      console.log("KNOWLEDGE PREVIEW:", companyKnowledge.slice(0, 300));
+      console.log("AVAILABLE MODELS:", modelListData.models?.map((m: any) => m.name));
+
     } catch (e) {
       console.log("Could not fetch models");
     }
+    console.log("KNOWLEDGE DOC COUNT:", knowledgeDocs?.length);
+    console.log("KNOWLEDGE LENGTH:", companyKnowledge.length);
+
     // 4. Gemini SDK Setup
     let aiResponse = "I'm currently unavailable.";
     const apiKey = process.env.GEMINI_API_KEY;
@@ -101,7 +124,18 @@ export async function POST(req: Request) {
 
         const model = genAI.getGenerativeModel({
           model: "gemini-2.5-flash",
-          systemInstruction: `You are a helpful AI assistant for ${company.name}.`,
+          systemInstruction: `
+You are a professional AI assistant for ${company.name}.
+
+You MUST answer strictly using the provided company knowledge below.
+
+If the answer is not found in the knowledge, reply:
+"I don't have that information. Please contact the company directly."
+
+Company Knowledge:
+-------------------
+${companyKnowledge}
+`,
         });
 
         const chat = model.startChat({

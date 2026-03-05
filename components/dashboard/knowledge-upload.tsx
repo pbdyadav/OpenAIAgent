@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import {
   Card,
   CardContent,
@@ -42,34 +43,32 @@ export function KnowledgeUpload({ companyId }: KnowledgeUploadProps) {
   }, []);
 
   const processFile = async (file: File) => {
+  try {
     setIsUploading(true);
-    setError(null);
 
-    try {
-      // Read file content
-      const content = await file.text();
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("companyId", companyId);
 
-      // Save to database
-      const { error: dbError } = await supabase
-        .from("knowledge_documents")
-        .insert({
-          company_id: companyId,
-          title: file.name,
-          content: content,
-          file_type: file.type || "text/plain",
-          file_size: file.size,
-          status: "processed",
-        });
+    const res = await fetch("/api/knowledge/upload", {
+      method: "POST",
+      body: formData,
+    });
 
-      if (dbError) throw dbError;
+    const data = await res.json();
 
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload file");
-    } finally {
-      setIsUploading(false);
+    if (!res.ok) {
+      throw new Error(data.error);
     }
-  };
+
+    router.refresh();
+
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
@@ -104,11 +103,11 @@ export function KnowledgeUpload({ companyId }: KnowledgeUploadProps) {
         .from("knowledge_documents")
         .insert({
           company_id: companyId,
-          title: textTitle,
+          file_name: textTitle,  // ✅ changed
           content: textContent,
           file_type: "text/plain",
           file_size: new Blob([textContent]).size,
-          status: "processed",
+          processed: true,
         });
 
       if (dbError) throw dbError;
@@ -153,11 +152,10 @@ export function KnowledgeUpload({ companyId }: KnowledgeUploadProps) {
 
           <TabsContent value="file">
             <div
-              className={`relative border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${
-                dragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-border/50 hover:border-primary/50 bg-secondary/30"
-              }`}
+              className={`relative border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${dragActive
+                ? "border-primary bg-primary/5"
+                : "border-border/50 hover:border-primary/50 bg-secondary/30"
+                }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
