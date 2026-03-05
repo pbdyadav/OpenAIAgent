@@ -16,8 +16,10 @@
 
   function initWidget() {
     const button = document.createElement("button");
-    button.innerText = "Chat";
 
+    button.id = "agenthub-chat-button";   // ⭐ important
+
+    button.innerText = "Chat";
     button.style.position = "fixed";
     button.style.bottom = "20px";
     button.style.right = "20px";
@@ -26,7 +28,7 @@
     button.style.color = "#fff";
     button.style.borderRadius = "8px";
     button.style.cursor = "pointer";
-    button.style.zIndex = "9999";
+    button.style.zIndex = "999999";
 
     button.onclick = openChat;
 
