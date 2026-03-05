@@ -5,13 +5,19 @@
   window.agenthub = function (action, slug) {
     if (action === "init") {
       companySlug = slug;
-      initWidget();
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initWidget);
+      } else {
+        initWidget();
+      }
     }
   };
 
   function initWidget() {
     const button = document.createElement("button");
     button.innerText = "Chat";
+
     button.style.position = "fixed";
     button.style.bottom = "20px";
     button.style.right = "20px";
@@ -23,6 +29,7 @@
     button.style.zIndex = "9999";
 
     button.onclick = openChat;
+
     document.body.appendChild(button);
   }
 
