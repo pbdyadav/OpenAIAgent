@@ -89,6 +89,9 @@ export async function POST(req: Request) {
       console.log("KNOWLEDGE LENGTH:", companyKnowledge.length);
       console.log("KNOWLEDGE PREVIEW:", companyKnowledge.slice(0, 300));
       console.log("AVAILABLE MODELS:", modelListData.models?.map((m: any) => m.name));
+      console.log("Incoming message:", message);
+      console.log("Company:", companySlug);
+      console.log("API KEY:", process.env.GEMINI_API_KEY);
 
     } catch (e) {
       console.log("Could not fetch models");
