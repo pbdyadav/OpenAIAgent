@@ -11,16 +11,16 @@ interface WidgetCodeSnippetProps {
 export function WidgetCodeSnippet({ companySlug }: WidgetCodeSnippetProps) {
   const [copied, setCopied] = useState(false);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  
+  const baseUrl = "https://openai.imalag.com";
+
   const codeSnippet = `<!-- AgentHub Chat Widget -->
 <script>
-  (function(w,d,s,o,f,js,fjs){
-    w['AgentHub']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
-    js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
-    js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
-  }(window,document,'script','agenthub','${baseUrl}/widget.js'));
-  agenthub('init', '${companySlug}');
+(function(w,d,s,o,f,js,fjs){
+w['AgentHub']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
+js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
+js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
+}(window,document,'script','agenthub','https://openai.imalag.com/widget.js'));
+agenthub('init','${companySlug}');
 </script>`;
 
   const handleCopy = async () => {
