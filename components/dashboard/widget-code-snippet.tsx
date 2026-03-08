@@ -13,15 +13,15 @@ export function WidgetCodeSnippet({ companySlug }: WidgetCodeSnippetProps) {
 
   const baseUrl = "https://openai.imalag.com";
 
-  const codeSnippet = `<!-- AgentHub Chat Widget -->
+  const codeSnippet = `<!-- AgentHub AI Chatbot -->
 <script>
-(function(w,d,s,o,f,js,fjs){
-w['AgentHub']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
-js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
-js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
-}(window,document,'script','agenthub','https://openai.imalag.com/widget.js'));
-agenthub('init','${companySlug}');
-</script>`;
+window.AgentHubConfig = {
+  botId: "${companySlug}"
+};
+</script>
+
+<script src="${baseUrl}/widget.js" async></script>
+`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(codeSnippet);
