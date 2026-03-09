@@ -1,26 +1,44 @@
 (function () {
 
-  const apiUrl = "https://ftt.imalag.com/api/chat";
-  const botId = window.AGENTHUB_BOT || "ftt";
+  let companySlug = null;
+  let conversationId = null;
 
-  function createWidget() {
+  const API_URL = "https://openai.imalag.com/api/chat";
+
+  window.agenthub = function (action, slug) {
+    if (action === "init") {
+      companySlug = slug;
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initWidget);
+      } else {
+        initWidget();
+      }
+    }
+  };
+
+  function initWidget() {
+
+    injectStyles();
 
     const bubble = document.createElement("div");
-    bubble.id = "ftt-chat-bubble";
+    bubble.id = "agenthub-bubble";
     bubble.innerHTML = "💬";
 
     const box = document.createElement("div");
-    box.id = "ftt-chat-box";
+    box.id = "agenthub-box";
 
     box.innerHTML = `
-      <div id="ftt-header">
+      <div id="agenthub-header">
         <span>Chat Support</span>
-        <button id="ftt-close">×</button>
+        <button id="agenthub-close">×</button>
       </div>
-      <div id="ftt-messages"></div>
-      <div id="ftt-input-area">
-        <input id="ftt-input" placeholder="Type a message..." />
-        <button id="ftt-send">Send</button>
+
+      <div id="agenthub-messages"></div>
+
+      <div id="agenthub-input-area">
+        <input id="agenthub-input" placeholder="Type a message..." />
+        <button id="agenthub-send">Send</button>
       </div>
     `;
 
@@ -32,54 +50,80 @@
       bubble.style.display = "none";
     };
 
-    document.getElementById("ftt-close").onclick = () => {
+    document.getElementById("agenthub-close").onclick = () => {
       box.style.display = "none";
       bubble.style.display = "flex";
     };
 
-    document.getElementById("ftt-send").onclick = sendMessage;
+    document.getElementById("agenthub-send").onclick = sendMessage;
 
     document
-      .getElementById("ftt-input")
+      .getElementById("agenthub-input")
       .addEventListener("keypress", function (e) {
         if (e.key === "Enter") sendMessage();
       });
   }
 
-  function sendMessage() {
+  async function sendMessage() {
 
-  const input = document.getElementById("ftt-input");
-  const msg = input.value.trim();
+    const input = document.getElementById("agenthub-input");
+    const msg = input.value.trim();
 
-  if (!msg) return;
+    if (!msg) return;
 
-  addMessage(msg, "user");
-  input.value = "";
+    addMessage(msg, "user");
 
-  if (window.agenthub) {
+    input.value = "";
 
-    window.agenthub("ask", msg, function (reply) {
+    const visitorId =
+      localStorage.getItem("agenthub_visitor") ||
+      (function () {
+        const id = crypto.randomUUID();
+        localStorage.setItem("agenthub_visitor", id);
+        return id;
+      })();
 
-      addMessage(reply, "bot");
+    try {
 
-    });
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companySlug,
+          message: msg,
+          visitorId,
+          conversationId,
+        }),
+      });
 
-  } else {
+      const data = await res.json();
 
-    addMessage("Bot not available", "bot");
+      if (data.response) {
+        addMessage(data.response, "bot");
+        conversationId = data.conversationId;
+      } else {
+        addMessage("Error: " + data.error, "bot");
+      }
 
+    } catch (err) {
+
+      addMessage("Server error: " + err.message, "bot");
+
+    }
   }
-}
 
   function addMessage(text, type) {
 
-    const messages = document.getElementById("ftt-messages");
+    const messages = document.getElementById("agenthub-messages");
 
     const msg = document.createElement("div");
-    msg.className = "ftt-msg " + type;
+    msg.className = "agenthub-msg " + type;
     msg.innerText = text;
 
     messages.appendChild(msg);
+
     messages.scrollTop = messages.scrollHeight;
   }
 
@@ -89,13 +133,13 @@
 
     css.innerHTML = `
 
-#ftt-chat-bubble{
+#agenthub-bubble{
 position:fixed;
 bottom:20px;
 right:20px;
 width:60px;
 height:60px;
-background:#007bff;
+background:#000;
 color:white;
 border-radius:50%;
 display:flex;
@@ -104,26 +148,26 @@ justify-content:center;
 font-size:26px;
 cursor:pointer;
 box-shadow:0 4px 20px rgba(0,0,0,0.2);
-z-index:9999;
+z-index:999999;
 }
 
-#ftt-chat-box{
+#agenthub-box{
 position:fixed;
 bottom:20px;
 right:20px;
-width:320px;
-height:420px;
+width:340px;
+height:440px;
 background:white;
 border-radius:12px;
 display:none;
 flex-direction:column;
 box-shadow:0 8px 30px rgba(0,0,0,0.2);
 font-family:sans-serif;
-z-index:9999;
+z-index:999999;
 }
 
-#ftt-header{
-background:#007bff;
+#agenthub-header{
+background:#000;
 color:white;
 padding:12px;
 display:flex;
@@ -132,44 +176,45 @@ align-items:center;
 border-radius:12px 12px 0 0;
 }
 
-#ftt-messages{
+#agenthub-messages{
 flex:1;
-padding:10px;
+padding:12px;
 overflow:auto;
 background:#f5f5f5;
 }
 
-.ftt-msg{
+.agenthub-msg{
 margin:6px 0;
 padding:8px 12px;
 border-radius:10px;
 max-width:80%;
+font-size:14px;
 }
 
-.ftt-msg.user{
-background:#007bff;
+.agenthub-msg.user{
+background:#000;
 color:white;
 margin-left:auto;
 }
 
-.ftt-msg.bot{
+.agenthub-msg.bot{
 background:#e4e6eb;
 }
 
-#ftt-input-area{
+#agenthub-input-area{
 display:flex;
 border-top:1px solid #ddd;
 }
 
-#ftt-input{
+#agenthub-input{
 flex:1;
 border:none;
 padding:10px;
 outline:none;
 }
 
-#ftt-send{
-background:#007bff;
+#agenthub-send{
+background:#000;
 color:white;
 border:none;
 padding:10px 14px;
@@ -179,17 +224,6 @@ cursor:pointer;
 `;
 
     document.head.appendChild(css);
-  }
-
-  function init() {
-    injectStyles();
-    createWidget();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
   }
 
 })();
