@@ -46,32 +46,30 @@
       });
   }
 
-  async function sendMessage() {
+  function sendMessage() {
 
-    const input = document.getElementById("ftt-input");
-    const msg = input.value.trim();
+  const input = document.getElementById("ftt-input");
+  const msg = input.value.trim();
 
-    if (!msg) return;
+  if (!msg) return;
 
-    addMessage(msg, "user");
+  addMessage(msg, "user");
+  input.value = "";
 
-    input.value = "";
+  if (window.agenthub) {
 
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        bot: botId,
-        message: msg,
-      }),
+    window.agenthub("ask", msg, function (reply) {
+
+      addMessage(reply, "bot");
+
     });
 
-    const data = await res.json();
+  } else {
 
-    addMessage(data.reply, "bot");
+    addMessage("Bot not available", "bot");
+
   }
+}
 
   function addMessage(text, type) {
 
