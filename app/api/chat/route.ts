@@ -132,51 +132,64 @@ export async function POST(req: Request) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // Fetch History for Context BEFORE sending new message
-        const { data: historyData } = await supabase
-          .from("messages")
-          .select("role, content")
-          .eq("conversation_id", currentConvId)
-          .order("created_at", { ascending: true })
-          .limit(10);
+      // Fetch History
+const { data: historyData } = await supabase
+  .from("messages")
+  .select("role, content")
+  .eq("conversation_id", currentConvId)
+  .order("created_at", { ascending: true })
+  .limit(10);
 
-        // Convert history to Gemini format
-        const chatHistory: Content[] = (historyData || [])
-          .filter(m => m.content !== message) // Naya message history mein repeat na ho
-          .map(m => ({
-            role: m.role === "assistant" ? "model" : "user",
-            parts: [{ text: m.content }],
-          }));
+// Convert history
+const chatHistory: Content[] = (historyData || [])
+  .filter(m => m.content !== message)
+  .map(m => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
 
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          systemInstruction: `
+let aiResponse = "I'm currently unavailable.";
+
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.error("GEMINI_API_KEY missing");
+} else {
+  try {
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: `
 You are a professional AI assistant for ${company.name}.
 
-You MUST answer strictly using the provided company knowledge below.
+Answer ONLY using the company knowledge.
 
-If the answer is not found in the knowledge, reply:
+If the answer is not found, reply:
 "I don't have that information. Please contact the company directly."
 
 Company Knowledge:
--------------------
 ${companyKnowledge}
 `,
-        });
+    });
 
-        const chat = model.startChat({
-          history: chatHistory,
-        });
+    const chat = model.startChat({
+      history: chatHistory,
+    });
 
-        const result = await chat.sendMessage(message);
-        aiResponse = result.response.text();
+    const result = await chat.sendMessage(message);
 
-      } catch (err: any) {
-        console.error("Gemini Error:", err);
-        aiResponse = "I am having trouble connecting to my brain. Error: " + err.message;
-      }
-    }
+    aiResponse = result.response.text();
 
+  } catch (err) {
+
+    console.error("Gemini Error:", err);
+
+    aiResponse = "Our AI assistant is temporarily busy. Please try again.";
+
+  }
+}
     // 5. Save AI Response
     await supabase.from("messages").insert({
       company_id: company.id,

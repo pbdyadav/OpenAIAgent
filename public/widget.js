@@ -38,6 +38,21 @@ let widgetSettings = {
     }
   };
 
+  (function () {
+
+  const currentScript =
+    document.currentScript ||
+    document.querySelector('script[src*="widget.js"]');
+
+  const slug =
+    currentScript?.getAttribute("data-agent") ||
+    currentScript?.getAttribute("data-company");
+
+  if (slug) {
+    window.agenthub("init", slug);
+  }
+
+})();
   function initWidget() {
 
     injectStyles();
