@@ -122,17 +122,7 @@ export async function POST(req: Request) {
     console.log("KNOWLEDGE DOC COUNT:", knowledgeDocs?.length);
     console.log("KNOWLEDGE LENGTH:", companyKnowledge.length);
 
-    // 4. Gemini SDK Setup
-    let aiResponse = "I'm currently unavailable.";
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      console.error("GEMINI_API_KEY is missing in .env.local");
-    } else {
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-
-      // Fetch History
+    // Fetch History
 const { data: historyData } = await supabase
   .from("messages")
   .select("role, content")
@@ -166,7 +156,7 @@ You are a professional AI assistant for ${company.name}.
 
 Answer ONLY using the company knowledge.
 
-If the answer is not found, reply:
+If the answer is not found reply:
 "I don't have that information. Please contact the company directly."
 
 Company Knowledge:
