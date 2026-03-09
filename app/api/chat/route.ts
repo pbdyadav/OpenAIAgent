@@ -25,11 +25,6 @@ export async function POST(req: Request) {
 
     const supabase = await createClient();
 
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-
     // 1. Find Company
     const { data: company, error: companyError } = await supabase
       .from("companies")
@@ -38,7 +33,10 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (companyError || !company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404, headers: corsHeaders });
+      return NextResponse.json(
+        { error: "Company not found" },
+        { status: 404, headers: corsHeaders }
+      );
     }
 
     // 2️⃣ Check Plan Limit
@@ -52,7 +50,7 @@ export async function POST(req: Request) {
       .eq("company_id", company.id)
       .gte("created_at", startOfMonth.toISOString());
 
-    if (company.chat_limit !== -1 && (count || 0) >= company.chat_limit) {
+    if (company.chat_limit !== -1 && (count ?? 0) >= company.chat_limit) {
       return NextResponse.json(
         {
           response: "Your monthly chat limit has been reached. Please upgrade your plan."
@@ -187,10 +185,19 @@ ${companyKnowledge}
       content: aiResponse,
     });
 
-    return NextResponse.json(
-      { response: aiResponse, conversationId: currentConvId },
-      { headers: corsHeaders }
-    );
+    const widgetSettings = company.settings?.widget || {
+  primary_color: "#000",
+  welcome_message: "Hi 👋 How can we help you?"
+};
+
+return NextResponse.json(
+  {
+    response: aiResponse,
+    conversationId: currentConvId,
+    widget: widgetSettings
+  },
+  { headers: corsHeaders }
+);
 
   } catch (error: any) {
     console.error("Full Error Log:", error);

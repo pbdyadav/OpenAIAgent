@@ -1,5 +1,26 @@
 (function () {
 
+  const currentScript =
+    document.currentScript ||
+    document.querySelector('script[src*="widget.js"]');
+
+  const slug =
+    currentScript?.getAttribute("data-agent") ||
+    currentScript?.getAttribute("data-company");
+
+  if (slug) {
+    window.agenthub("init", slug);
+  }
+
+})();
+
+let widgetSettings = {
+  primary_color: "#000",
+  welcome_message: "Hi 👋 How can we help you?"
+};
+
+(function () {
+
   let companySlug = null;
   let conversationId = null;
 
@@ -64,6 +85,8 @@
       });
 
     loadHistory();
+
+    addMessage(widgetSettings.welcome_message, "bot");
   }
 
   async function sendMessage() {
@@ -107,7 +130,16 @@
 
       removeTyping();
 
+      if (data.widget) {
+        applyTheme(data.widget);
+      }
+
       if (data.response) {
+
+        if (data.response.includes("monthly chat limit")) {
+          addMessage(data.response, "bot");
+          return;
+        }
 
         addMessage(data.response, "bot");
         saveMessage(data.response, "bot");
@@ -115,9 +147,7 @@
         conversationId = data.conversationId;
 
       } else {
-
         addMessage("Error: " + data.error, "bot");
-
       }
 
     } catch (err) {
@@ -126,6 +156,17 @@
       addMessage("Server error", "bot");
 
     }
+  }
+
+  function applyTheme(settings) {
+
+    widgetSettings = settings;
+
+    document.documentElement.style.setProperty(
+      "--agenthub-color",
+      settings.primary_color
+    );
+
   }
 
   function addMessage(text, type) {
@@ -184,13 +225,17 @@
 
     css.innerHTML = `
 
+:root{
+--agenthub-color:#000;
+}
+
 #agenthub-bubble{
 position:fixed;
 bottom:20px;
 right:20px;
 width:60px;
 height:60px;
-background:#000;
+background:var(--agenthub-color);
 color:white;
 border-radius:50%;
 display:flex;
@@ -211,13 +256,13 @@ background:white;
 border-radius:12px;
 display:none;
 flex-direction:column;
-box-shadow:0 8px 30px rgba(66, 52, 225, 0.81);
+box-shadow:0 8px 30px rgba(0,0,0,0.2);
 font-family:sans-serif;
 z-index:999999;
 }
 
 #agenthub-header{
-background:#000;
+background:var(--agenthub-color);
 color:white;
 padding:12px;
 display:flex;
@@ -242,7 +287,7 @@ font-size:14px;
 }
 
 .agenthub-msg.user{
-background:#000;
+background:var(--agenthub-color);
 color:white;
 margin-left:auto;
 }
@@ -264,7 +309,7 @@ outline:none;
 }
 
 #agenthub-send{
-background:#000;
+background:var(--agenthub-color);
 color:white;
 border:none;
 padding:10px 14px;
