@@ -62,6 +62,8 @@
       .addEventListener("keypress", function (e) {
         if (e.key === "Enter") sendMessage();
       });
+
+    loadHistory();
   }
 
   async function sendMessage() {
@@ -72,8 +74,11 @@
     if (!msg) return;
 
     addMessage(msg, "user");
+    saveMessage(msg, "user");
 
     input.value = "";
+
+    showTyping();
 
     const visitorId =
       localStorage.getItem("agenthub_visitor") ||
@@ -100,16 +105,25 @@
 
       const data = await res.json();
 
+      removeTyping();
+
       if (data.response) {
+
         addMessage(data.response, "bot");
+        saveMessage(data.response, "bot");
+
         conversationId = data.conversationId;
+
       } else {
+
         addMessage("Error: " + data.error, "bot");
+
       }
 
     } catch (err) {
 
-      addMessage("Server error: " + err.message, "bot");
+      removeTyping();
+      addMessage("Server error", "bot");
 
     }
   }
@@ -123,8 +137,45 @@
     msg.innerText = text;
 
     messages.appendChild(msg);
-
     messages.scrollTop = messages.scrollHeight;
+  }
+
+  function showTyping() {
+
+    const messages = document.getElementById("agenthub-messages");
+
+    const typing = document.createElement("div");
+    typing.id = "agenthub-typing";
+    typing.className = "agenthub-msg bot";
+    typing.innerText = "AI is typing...";
+
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function removeTyping() {
+
+    const typing = document.getElementById("agenthub-typing");
+
+    if (typing) typing.remove();
+  }
+
+  function saveMessage(text, type) {
+
+    const history =
+      JSON.parse(localStorage.getItem("agenthub_history")) || [];
+
+    history.push({ text, type });
+
+    localStorage.setItem("agenthub_history", JSON.stringify(history));
+  }
+
+  function loadHistory() {
+
+    const history =
+      JSON.parse(localStorage.getItem("agenthub_history")) || [];
+
+    history.forEach((m) => addMessage(m.text, m.type));
   }
 
   function injectStyles() {
@@ -147,7 +198,6 @@ align-items:center;
 justify-content:center;
 font-size:26px;
 cursor:pointer;
-box-shadow:0 4px 20px rgba(0,0,0,0.2);
 z-index:999999;
 }
 
@@ -156,12 +206,12 @@ position:fixed;
 bottom:20px;
 right:20px;
 width:340px;
-height:440px;
+height:460px;
 background:white;
 border-radius:12px;
 display:none;
 flex-direction:column;
-box-shadow:0 8px 30px rgba(0,0,0,0.2);
+box-shadow:0 8px 30px rgba(66, 52, 225, 0.81);
 font-family:sans-serif;
 z-index:999999;
 }

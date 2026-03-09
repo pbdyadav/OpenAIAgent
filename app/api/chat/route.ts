@@ -25,6 +25,11 @@ export async function POST(req: Request) {
 
     const supabase = await createClient();
 
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+
     // 1. Find Company
     const { data: company, error: companyError } = await supabase
       .from("companies")
@@ -36,7 +41,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Company not found" }, { status: 404, headers: corsHeaders });
     }
 
-    // 2. Get/Create Conversation
+    // 2️⃣ Check Plan Limit
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { count } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", company.id)
+      .gte("created_at", startOfMonth.toISOString());
+
+    if (company.chat_limit !== -1 && (count || 0) >= company.chat_limit) {
+      return NextResponse.json(
+        {
+          response: "Your monthly chat limit has been reached. Please upgrade your plan."
+        },
+        { headers: corsHeaders }
+      );
+    }
+
+    // 3. Get/Create Conversation
     let { data: conversation } = await supabase
       .from("conversations")
       .select("id")
@@ -57,7 +82,7 @@ export async function POST(req: Request) {
 
     const currentConvId = conversation!.id;
 
-    // 3. Save User Message
+    // 4. Save User Message
     await supabase.from("messages").insert({
       company_id: company.id,
       conversation_id: currentConvId,
@@ -65,7 +90,7 @@ export async function POST(req: Request) {
       content: message,
     });
 
-    // 3.5 Fetch Company Knowledge
+    // 4.5 Fetch Company Knowledge
     const { data: knowledgeDocs } = await supabase
       .from("knowledge_documents")
       .select("content")
@@ -81,7 +106,7 @@ export async function POST(req: Request) {
         .slice(0, 15000); // token safety limit
     }
 
-    // DEBUG: Yeh line check karein ki API key ko kya models dikh rahe hain
+    // 6. DEBUG: Yeh line check karein ki API key ko kya models dikh rahe hain
     try {
       const modelListRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
       const modelListData = await modelListRes.json();
