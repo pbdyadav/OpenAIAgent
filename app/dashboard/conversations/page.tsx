@@ -38,16 +38,11 @@ export default async function ConversationsPage() {
   }
 
   const { data: conversations } = await supabase
-    .from("conversations")
-    .select(
-      `
-      *,
-      messages:messages(count)
-    `
-    )
-    .eq("company_id", company.id)
-    .order("updated_at", { ascending: false })
-    .limit(50);
+  .from("conversations")
+  .select("*")
+  .eq("company_id", company.id)
+  .order("updated_at", { ascending: false })
+  .limit(50);
 
   return (
     <div className="space-y-8">
@@ -115,7 +110,7 @@ export default async function ConversationsPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(conv.updated_at).toLocaleDateString()}
+                            {new Date(conv.updated_at || conv.started_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
