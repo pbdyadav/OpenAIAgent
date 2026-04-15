@@ -169,6 +169,7 @@ export async function startWhatsApp() {
 
       // SAVE USER MESSAGE
       await supabase.from("messages").insert({
+        company_id: company.id,
         conversation_id: conversation.id,
         role: "user",
         content: userMessage,
@@ -194,9 +195,14 @@ export async function startWhatsApp() {
 
       // SAVE AI MESSAGE
       await supabase.from("messages").insert({
+        company_id: company.id,
         conversation_id: conversation.id,
         role: "assistant",
         content: aiReply,
+      });
+
+      await supabase.rpc("increment_chat_count", {
+        company_id: company.id,
       });
 
       console.log("🤖 Reply:", aiReply);

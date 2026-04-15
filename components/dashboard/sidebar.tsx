@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand-logo";
 import {
-  Bot,
   LayoutDashboard,
   FileText,
   MessageSquare,
@@ -33,6 +33,7 @@ interface Company {
 interface DashboardSidebarProps {
   company: Company | null;
   user: User;
+  usageCount?: number;
 }
 
 const navItems = [
@@ -51,7 +52,7 @@ const planConfig = {
   pro_plus: { label: "Pro+", icon: Crown, color: "text-accent", bg: "bg-accent/10", border: "border-accent/30" },
 };
 
-export function DashboardSidebar({ company, user }: DashboardSidebarProps) {
+export function DashboardSidebar({ company, user, usageCount }: DashboardSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -67,17 +68,14 @@ export function DashboardSidebar({ company, user }: DashboardSidebarProps) {
   const PlanIcon = planInfo.icon;
   const chatUsage = company?.chat_limit === -1 
     ? "Unlimited" 
-    : `${company?.chat_count || 0} / ${company?.chat_limit || 50}`;
+    : `${usageCount ?? company?.chat_count ?? 0} / ${company?.chat_limit || 50}`;
 
   return (
     <aside className="w-64 border-r border-border/50 bg-sidebar flex flex-col">
       {/* Logo */}
       <div className="p-5 border-b border-border/50">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-            <Bot className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">AgentHub</span>
+          <BrandLogo imageClassName="h-8 w-auto" />
         </Link>
       </div>
 
@@ -93,13 +91,20 @@ export function DashboardSidebar({ company, user }: DashboardSidebarProps) {
           <div className="text-xs text-muted-foreground mb-2">
             Chats: {chatUsage}
           </div>
-          {plan === "free" && (
-            <Link href="/dashboard/settings?tab=billing">
-              <Button size="sm" className="w-full mt-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-xs h-8">
-                Upgrade Plan
+          <div className="mt-3 grid gap-2">
+            <Link href="/dashboard/settings?tab=general">
+              <Button size="sm" variant="outline" className="w-full justify-center text-xs h-8 bg-transparent">
+                Edit profile
               </Button>
             </Link>
-          )}
+            {plan === "free" && (
+              <Link href="/dashboard/settings?tab=billing">
+                <Button size="sm" className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-xs h-8">
+                  Upgrade plan
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -146,10 +151,16 @@ export function DashboardSidebar({ company, user }: DashboardSidebarProps) {
             <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
           </div>
         </div>
+        <Link href="/dashboard/settings?tab=general" className="block px-4 mb-2">
+          <Button variant="outline" size="sm" className="w-full justify-start bg-transparent text-foreground border-border/50">
+            <Settings className="w-4 h-4 mr-2" />
+            Profile settings
+          </Button>
+        </Link>
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          className="w-full justify-start text-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={handleSignOut}
         >
           <LogOut className="w-4 h-4 mr-2" />

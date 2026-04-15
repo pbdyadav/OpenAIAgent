@@ -39,6 +39,7 @@ create table if not exists public.conversations (
 -- Individual messages in conversations
 create table if not exists public.messages (
   id uuid primary key default gen_random_uuid(),
+  company_id uuid references public.companies(id) on delete cascade,
   conversation_id uuid not null references public.conversations(id) on delete cascade,
   role text not null check (role in ('user', 'assistant')),
   content text not null,
@@ -164,4 +165,5 @@ create policy "Users can update own whatsapp config" on public.whatsapp_config
 create index if not exists idx_companies_user_id on public.companies(user_id);
 create index if not exists idx_knowledge_documents_company_id on public.knowledge_documents(company_id);
 create index if not exists idx_conversations_company_id on public.conversations(company_id);
+create index if not exists idx_messages_company_id on public.messages(company_id);
 create index if not exists idx_messages_conversation_id on public.messages(conversation_id);

@@ -29,6 +29,16 @@ export default async function SettingsPage({
     .eq("user_id", user.id)
     .maybeSingle();
 
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const { count: currentMonthUsage } = await supabase
+    .from("conversations")
+    .select("*", { count: "exact", head: true })
+    .eq("company_id", company?.id)
+    .gte("started_at", startOfMonth.toISOString());
+
   const params = await searchParams;
   const defaultTab = params.tab || "general";
 
@@ -40,7 +50,7 @@ export default async function SettingsPage({
           <Settings className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
           <p className="text-muted-foreground">
             Manage your company and AI agent settings
           </p>
@@ -75,7 +85,7 @@ export default async function SettingsPage({
               Please create a company first.
             </p>
           ) : (
-            <BillingSettings company={company} />
+            <BillingSettings company={company} usageCount={currentMonthUsage || 0} />
           )}
         </TabsContent>
       </Tabs>

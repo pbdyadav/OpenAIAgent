@@ -1,15 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { MessageSquare, Clock, Globe, Smartphone, Users } from "lucide-react";
+import { ConversationsBoard, type ConversationRow } from "@/components/dashboard/conversations-board";
 
-export default async function ConversationsPage() {
+type SearchParams = {
+  date?: string;
+  channel?: string;
+};
+
+export default async function ConversationsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,7 +21,8 @@ export default async function ConversationsPage() {
     redirect("/auth/login");
   }
 
-  // ✅ SAFE company fetch
+  const params = (await searchParams) || {};
+
   const { data: company } = await supabase
     .from("companies")
     .select("*")
@@ -37,100 +40,83 @@ export default async function ConversationsPage() {
     );
   }
 
-  const { data: conversations } = await supabase
-  .from("conversations")
-  .select("*")
-  .eq("company_id", company.id)
-  .order("updated_at", { ascending: false })
-  .limit(50);
+  const selectedDate = params.date ? new Date(params.date) : null;
+  const hasSelectedDate = !!selectedDate && !Number.isNaN(selectedDate.getTime());
+  const rangeStart = hasSelectedDate ? new Date(selectedDate!) : null;
+  const rangeEnd = hasSelectedDate ? new Date(selectedDate!) : null;
+
+  if (rangeStart) rangeStart.setHours(0, 0, 0, 0);
+  if (rangeEnd) rangeEnd.setHours(23, 59, 59, 999);
+
+  let conversationsQuery = supabase
+    .from("conversations")
+    .select("id, company_id, channel, visitor_id, started_at, ended_at")
+    .eq("company_id", company.id);
+
+  if (params.channel === "website" || params.channel === "whatsapp") {
+    conversationsQuery = conversationsQuery.eq("channel", params.channel);
+  }
+
+  if (hasSelectedDate) {
+    conversationsQuery = conversationsQuery
+      .gte("started_at", rangeStart!.toISOString())
+      .lte("started_at", rangeEnd!.toISOString());
+  }
+
+  const { data: conversations } = await conversationsQuery.order("started_at", {
+    ascending: false,
+  });
+
+  const conversationIds = (conversations || []).map((conversation) => conversation.id);
+
+  type ThreadMessage = {
+    id: string;
+    conversation_id: string;
+    role: "user" | "assistant";
+    content: string;
+    created_at: string;
+  };
+
+  const { data: messages } = conversationIds.length
+    ? await supabase
+        .from("messages")
+        .select("id, conversation_id, role, content, created_at")
+        .in("conversation_id", conversationIds)
+        .order("created_at", { ascending: true })
+    : { data: [] as ThreadMessage[] };
+
+  const messagesByConversation = (messages || []).reduce(
+    (acc, message) => {
+      if (!acc[message.conversation_id]) {
+        acc[message.conversation_id] = [];
+      }
+
+      acc[message.conversation_id].push(message);
+      return acc;
+    },
+    {} as Record<string, ThreadMessage[]>,
+  );
+
+  const conversationRows: ConversationRow[] = (conversations || []).map((conversation) => {
+    const thread = messagesByConversation[conversation.id] || [];
+    const userMessages = thread.filter((message) => message.role === "user");
+    const aiMessages = thread.filter((message) => message.role === "assistant");
+
+    return {
+      ...conversation,
+      thread,
+      userMessage: userMessages[userMessages.length - 1]?.content || "",
+      aiReply: aiMessages[aiMessages.length - 1]?.content || "",
+      messageCount: thread.length,
+    };
+  });
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Conversations</h1>
-            <p className="text-muted-foreground">
-              View and manage customer conversations
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Conversations Card */}
-      <Card className="bg-card border-border/50">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <CardTitle className="text-foreground">Recent Conversations</CardTitle>
-              <CardDescription>
-                All conversations from your AI agent
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!conversations || conversations.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
-                <MessageSquare className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="font-medium text-foreground">No conversations yet</p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-                Conversations will appear here when customers start chatting with your AI agent
-              </p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border/50">
-              {conversations.map((conv) => (
-                <li key={conv.id} className="py-4 first:pt-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-all duration-200 -mx-3">
-                    <div className="flex items-start gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10">
-                        {conv.channel === "whatsapp" ? (
-                          <Smartphone className="w-5 h-5 text-accent" />
-                        ) : (
-                          <Globe className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {conv.visitor_id.substring(0, 8)}...
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <span className="capitalize px-2 py-0.5 rounded-full bg-secondary">
-                            {conv.channel}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {new Date(conv.updated_at || conv.started_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-xs px-3 py-1 rounded-full font-medium ${
-                        conv.status === "active"
-                          ? "bg-accent/10 text-accent border border-accent/20"
-                          : "bg-muted text-muted-foreground border border-border/50"
-                      }`}
-                    >
-                      {conv.status}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <ConversationsBoard
+      companyName={company.name}
+      conversations={conversationRows}
+      currentChannel={params.channel || "all"}
+      currentDate={hasSelectedDate ? params.date || null : null}
+    />
   );
 }

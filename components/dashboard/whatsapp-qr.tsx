@@ -11,21 +11,27 @@ export default function WhatsAppQR() {
 
         const interval = setInterval(async () => {
 
-            const res = await fetch("/api/whatsapp/qr");
-            const data = await res.json();
+            try {
+                const res = await fetch("/api/whatsapp/qr");
+                const data = await res.json();
 
-            setStatus(data.status);
+                console.log("STATUS:", data.status); // ✅ YAHAN
 
-            if (data.status === "connected") {
-                setQr(null);
-                clearInterval(interval);
-                return;
+                setStatus(data.status);
+
+                if (data.status === "connected") {
+                    setQr(null);
+                    clearInterval(interval);
+                    return;
+                }
+
+                if (data.qr) {
+                    setQr(data.qr);
+                }
+
+            } catch (err) {
+                console.error("QR fetch error:", err);
             }
-
-            if (data.qr) {
-                setQr(data.qr);
-            }
-
 
         }, 2000);
 
@@ -33,18 +39,20 @@ export default function WhatsAppQR() {
 
     }, []);
 
-    if (status === "connected") {
-        return <p>✅ WhatsApp Connected Successfully</p>;
+    // =========================
+    // 🟡 DISABLED (VERCEL)
+    // =========================
+    if (status === "disabled") {
+        return (
+            <p className="text-yellow-500 text-center">
+                WhatsApp service is disabled on cloud. Running on private server.
+            </p>
+        );
     }
 
-    if (!qr) {
-        return <p>Generating QR...</p>;
-    }
-
-    return <img src={qr} width={280} />;
-
-
+    // =========================
     // 🟢 CONNECTED
+    // =========================
     if (status === "connected") {
         return (
             <div className="flex flex-col items-center gap-4">
@@ -74,7 +82,9 @@ export default function WhatsAppQR() {
         );
     }
 
+    // =========================
     // 🔴 DISCONNECTED
+    // =========================
     if (status === "disconnected") {
         return (
             <div className="text-center">
@@ -86,5 +96,16 @@ export default function WhatsAppQR() {
         );
     }
 
-    return null;
+    // =========================
+    // ⏳ LOADING / QR
+    // =========================
+    if (!qr) {
+        return (
+            <p className="text-muted-foreground text-center">
+                Generating QR...
+            </p>
+        );
+    }
+
+    return <img src={qr} width={280} />;
 }

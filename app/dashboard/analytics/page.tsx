@@ -20,42 +20,48 @@ export default async function AnalyticsPage() {
   }
 
   const { data: company } = await supabase
-  .from("companies")
-  .select("*")
-  .eq("user_id", user.id)
-  .maybeSingle();
+    .from("companies")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-if (!company) {
-  return (
-    <div className="p-10 text-center">
-      <h2 className="text-xl font-semibold">Company not set up</h2>
-      <p className="text-muted-foreground mt-2">
-        Please complete company setup from Settings.
-      </p>
-    </div>
-  );
-}
+  if (!company) {
+    return (
+      <div className="p-10 text-center">
+        <h2 className="text-xl font-semibold">Company not set up</h2>
+        <p className="text-muted-foreground mt-2">
+          Please complete company setup from Settings.
+        </p>
+      </div>
+    );
+  }
 
-  // Get analytics data
+  const { data: conversations } = await supabase
+    .from("conversations")
+    .select("id, started_at")
+    .eq("company_id", company.id);
+
+  const conversationIds = (conversations || []).map((conversation) => conversation.id);
+
   const { count: totalConversations } = await supabase
     .from("conversations")
     .select("*", { count: "exact", head: true })
     .eq("company_id", company.id);
 
-  const { count: totalMessages } = await supabase
-    .from("messages")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", company.id);
+  const { count: totalMessages } = conversationIds.length
+    ? await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", conversationIds)
+    : { count: 0 };
 
-  // Get conversations from last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const { count: recentConversations } = await supabase
-    .from("conversations")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", company.id)
-    .gte("created_at", sevenDaysAgo.toISOString());
+  const recentConversations =
+    conversations?.filter(
+      (conversation) => new Date(conversation.started_at).getTime() >= sevenDaysAgo.getTime(),
+    ).length || 0;
 
   const stats = [
     {
@@ -63,21 +69,24 @@ if (!company) {
       value: totalConversations || 0,
       icon: MessageSquare,
       description: "All time",
-      color: "primary",
+      iconClass: "text-primary",
+      bgClass: "bg-primary/10",
     },
     {
       label: "Total Messages",
       value: totalMessages || 0,
       icon: Users,
       description: "All time",
-      color: "accent",
+      iconClass: "text-accent",
+      bgClass: "bg-accent/10",
     },
     {
       label: "Last 7 Days",
-      value: recentConversations || 0,
+      value: recentConversations,
       icon: Clock,
       description: "Conversations",
-      color: "primary",
+      iconClass: "text-primary",
+      bgClass: "bg-primary/10",
     },
     {
       label: "Avg. Messages",
@@ -87,13 +96,13 @@ if (!company) {
           : 0,
       icon: TrendingUp,
       description: "Per conversation",
-      color: "accent",
+      iconClass: "text-accent",
+      bgClass: "bg-accent/10",
     },
   ];
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center">
@@ -108,7 +117,6 @@ if (!company) {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <Card key={stat.label} className="bg-card border-border/50 hover:border-primary/30 transition-all duration-300">
@@ -116,8 +124,8 @@ if (!company) {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.label}
               </CardTitle>
-              <div className={`w-10 h-10 rounded-xl bg-${stat.color}/10 flex items-center justify-center`}>
-                <stat.icon className={`w-5 h-5 text-${stat.color}`} />
+              <div className={`w-10 h-10 rounded-xl ${stat.bgClass} flex items-center justify-center`}>
+                <stat.icon className={`w-5 h-5 ${stat.iconClass}`} />
               </div>
             </CardHeader>
             <CardContent>
@@ -130,7 +138,6 @@ if (!company) {
         ))}
       </div>
 
-      {/* Activity Overview */}
       <Card className="bg-card border-border/50">
         <CardHeader>
           <div className="flex items-center gap-3">

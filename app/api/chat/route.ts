@@ -188,6 +188,10 @@ ${companyKnowledge}
       content: aiResponse,
     });
 
+    await supabase.rpc("increment_chat_count", {
+      company_id: company.id,
+    });
+
     const widgetSettings = company.settings?.widget || {
   primary_color: "#000",
   welcome_message: "Hi 👋 How can we help you?"

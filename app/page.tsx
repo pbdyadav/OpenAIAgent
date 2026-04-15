@@ -1,339 +1,317 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand-logo";
 import {
-  Bot,
   MessageSquare,
   Upload,
   BarChart3,
-  Zap,
-  Shield,
   ArrowRight,
   Check,
-  Sparkles,
+  ScanLine,
+  NotebookPen,
+  MessagesSquare,
 } from "lucide-react";
 
 export default function LandingPage() {
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Gradient background effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-accent/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-      </div>
+  const features = [
+    {
+      icon: Upload,
+      title: "Knowledge base that teams can actually maintain",
+      description:
+        "Upload PDFs, service documents, pricing sheets, FAQs, and plain text so your bot answers from real company context.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Website widget for lead capture and support",
+      description:
+        "Add a branded chat widget to any site and handle common sales and support conversations without waiting on your team.",
+    },
+    {
+      icon: ScanLine,
+      title: "WhatsApp onboarding with business-first setup",
+      description:
+        "Guide clients through account connection, compliance, and message flows so WhatsApp feels like an extension of their company.",
+    },
+    {
+      icon: NotebookPen,
+      title: "Control over tone, replies, and escalation",
+      description:
+        "Define what the assistant should say, when it should hand off, and how it should represent the company in every channel.",
+    },
+    {
+      icon: BarChart3,
+      title: "Conversation visibility for every company",
+      description:
+        "Review chats, monitor missed intents, and keep improving knowledge quality as the product gets real customer traffic.",
+    },
+    {
+      icon: MessagesSquare,
+      title: "Built for agencies and multi-client operations",
+      description:
+        "Create a repeatable system for onboarding multiple businesses instead of rebuilding the same support stack each time.",
+    },
+  ];
 
-      {/* Navigation */}
-      <header className="relative z-10 border-b border-border/50 backdrop-blur-xl bg-background/80">
-        <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
+  const steps = [
+    "Client uploads company information, service details, and offer documents.",
+    "You tune the assistant voice, fallback rules, and escalation logic.",
+    "The client goes live on web chat first, then WhatsApp through the approved business flow.",
+  ];
+
+  const plans = [
+    {
+      name: "Starter",
+      price: "₹0",
+      description: "For demos, testing, and early client onboarding.",
+      cta: "Start Free",
+      href: "/auth/sign-up",
+      featured: false,
+      items: ["50 chats per month", "1 AI agent", "Website widget", "Basic analytics"],
+    },
+    {
+      name: "Growth",
+      price: "₹399",
+      description: "For businesses ready to run support across web and WhatsApp.",
+      cta: "Try Growth",
+      href: "/auth/sign-up?plan=pro",
+      featured: true,
+      items: ["10,000 chats per month", "3 AI agents", "WhatsApp workflow", "Priority support"],
+    },
+    {
+      name: "Scale",
+      price: "₹999",
+      description: "For agencies and larger teams managing multiple conversations daily.",
+      cta: "Talk to Sales",
+      href: "/auth/sign-up?plan=pro_plus",
+      featured: false,
+      items: ["Unlimited chats", "Unlimited AI agents", "Custom training", "API access"],
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#f5efe6] text-[#1f1a17]">
+      <div className="fixed inset-0 pointer-events-none paper-grid opacity-40" />
+      <div className="absolute inset-x-0 top-0 h-[38rem] bg-[radial-gradient(circle_at_top,_rgba(202,123,69,0.22),_transparent_56%)]" />
+
+      <header className="relative z-10">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
+          <BrandLogo />
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Bot className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              AgentHub
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
             <Link href="#pricing">
-              <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" className="text-[#5f564e] hover:bg-[#eadfce] hover:text-[#1f1a17]">
                 Pricing
               </Button>
             </Link>
             <Link href="/auth/login">
-              <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" className="text-[#5f564e] hover:bg-[#eadfce] hover:text-[#1f1a17]">
                 Sign In
               </Button>
             </Link>
             <Link href="/auth/sign-up">
-              <Button className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25">
+              <Button className="rounded-full bg-[#1f1a17] px-6 text-[#f7f1e8] hover:bg-[#3b312b]">
                 Get Started
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
         </nav>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative z-10 container mx-auto px-6 pt-24 pb-32">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-primary font-medium">
-              AI-Powered Customer Support
-            </span>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/60 bg-clip-text text-transparent">
-              Build Your AI Agent
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              In Minutes
-            </span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-            Create intelligent AI agents trained on your business data. Deploy on your website 
-            and WhatsApp to provide 24/7 customer support that actually understands your business.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/auth/sign-up">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-6 text-lg shadow-2xl shadow-primary/30">
-                Start Free Trial
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-            <Link href="#features">
-              <Button size="lg" variant="outline" className="px-8 py-6 text-lg border-border/50 bg-transparent hover:bg-secondary">
-                See How It Works
-              </Button>
-            </Link>
-          </div>
-          <p className="mt-6 text-sm text-muted-foreground">
-            50 free chats included. No credit card required.
-          </p>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="relative z-10 py-24 border-t border-border/50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
-              Everything You Need to Deploy AI Support
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              From knowledge base to deployment, we handle the complexity so you can focus on your business.
+      <main className="relative z-10">
+        <section className="mx-auto grid w-full max-w-7xl gap-14 px-6 pb-20 pt-14 lg:grid-cols-[1.2fr_0.8fr] lg:px-10 lg:pb-28 lg:pt-16">
+          <div>
+            <div className="mb-6 inline-flex items-center rounded-full border border-[#1f1a17]/10 bg-[#fffaf3] px-4 py-2 text-sm text-[#6e6257]">
+              Website + WhatsApp support for service businesses
+            </div>
+            <h1 className="max-w-4xl font-display text-5xl leading-[0.94] tracking-tight md:text-7xl">
+              Build an AI support system that feels like part of the company.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#5f564e]">
+              Train one assistant on company documents, product details, and support policies, then use it across website chat and WhatsApp with a setup clients can understand.
             </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Upload,
-                title: "Upload Your Knowledge",
-                description:
-                  "Upload PDFs, documents, or paste text. Our AI learns your business instantly.",
-                gradient: "from-primary/20 to-primary/5",
-              },
-              {
-                icon: MessageSquare,
-                title: "Website Chat Widget",
-                description:
-                  "Embed a beautiful chat widget on your site with just one line of code.",
-                gradient: "from-accent/20 to-accent/5",
-              },
-              {
-                icon: Bot,
-                title: "WhatsApp Integration",
-                description:
-                  "Connect WhatsApp Business to reach customers on their favorite platform.",
-                gradient: "from-primary/20 to-accent/5",
-              },
-              {
-                icon: BarChart3,
-                title: "Real-time Analytics",
-                description:
-                  "Track conversations, measure satisfaction, and optimize your AI agent.",
-                gradient: "from-accent/20 to-primary/5",
-              },
-              {
-                icon: Zap,
-                title: "Instant Responses",
-                description:
-                  "Sub-second response times powered by cutting-edge AI infrastructure.",
-                gradient: "from-primary/20 to-primary/5",
-              },
-              {
-                icon: Shield,
-                title: "Enterprise Security",
-                description:
-                  "Your data is encrypted and isolated. SOC 2 compliant infrastructure.",
-                gradient: "from-accent/20 to-accent/5",
-              },
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="group relative p-6 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/50 hover:border-primary/30 transition-all duration-300"
-              >
-                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
+            <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <Link href="/auth/sign-up">
+                <Button size="lg" className="rounded-full bg-[#a54d2d] px-8 text-base text-[#fff7ef] hover:bg-[#8f4023]">
+                  Start building
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="#workflow">
+                <Button size="lg" variant="outline" className="rounded-full border-[#1f1a17]/15 bg-[#fffaf3] px-8 text-base text-[#1f1a17] hover:bg-[#efe3d3]">
+                  See workflow
+                </Button>
+              </Link>
+            </div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-3">
+              {[
+                ["24/7", "reply coverage"],
+                ["PDF + text", "knowledge ingestion"],
+                ["Multi-client", "company onboarding"],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-3xl border border-[#1f1a17]/10 bg-[#fffaf3] p-5">
+                  <p className="font-display text-3xl">{value}</p>
+                  <p className="mt-2 text-sm uppercase tracking-[0.18em] text-[#7a6d61]">{label}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="warm-shadow rounded-[2rem] border border-[#1f1a17]/10 bg-[#fffaf3] p-6 sm:p-8">
+            <div className="flex items-center justify-between border-b border-[#1f1a17]/10 pb-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-[#8a7665]">Launch board</p>
+                <p className="mt-2 font-display text-3xl">From company docs to live replies</p>
+              </div>
+              <div className="rounded-full bg-[#e9d6bf] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#7b4b2c]">
+                Live
+              </div>
+            </div>
+            <div className="mt-6 space-y-4">
+              {[
+                ["Knowledge Base", "Brochure.pdf, pricing.txt, service FAQs"],
+                ["Website Widget", "Lead qualification, support answers, handoff rules"],
+                ["WhatsApp", "Onboard verified business account and automate safe replies"],
+              ].map(([title, copy]) => (
+                <div key={title} className="rounded-3xl bg-[#f6ecdf] p-5">
+                  <p className="text-sm uppercase tracking-[0.2em] text-[#8a7665]">{title}</p>
+                  <p className="mt-2 text-base leading-7 text-[#413831]">{copy}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 rounded-3xl border border-dashed border-[#a54d2d]/35 bg-[#fff7ef] p-5">
+              <p className="text-sm uppercase tracking-[0.2em] text-[#8a7665]">Why this feels credible</p>
+              <p className="mt-2 text-base leading-7 text-[#413831]">
+                Less “AI magic”, more operational clarity: what the bot knows, where it replies, and how companies stay in control.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow" className="border-y border-[#1f1a17]/10 bg-[#f0e2cf]">
+          <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
+            <div>
+              <p className="text-sm uppercase tracking-[0.28em] text-[#8a7665]">Workflow</p>
+              <h2 className="mt-4 font-display text-4xl leading-tight md:text-5xl">
+                A practical product story beats a generic AI homepage every time.
+              </h2>
+            </div>
+            <div className="grid gap-4">
+              {steps.map((step, index) => (
+                <div key={step} className="flex gap-4 rounded-3xl border border-[#1f1a17]/10 bg-[#fffaf3] p-5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1f1a17] text-sm font-semibold text-[#f7f1e8]">
+                    0{index + 1}
+                  </div>
+                  <p className="pt-1 text-base leading-7 text-[#413831]">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="features" className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
+          <div className="max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.28em] text-[#8a7665]">Core product</p>
+            <h2 className="mt-4 font-display text-4xl leading-tight md:text-5xl">
+              Designed around how real companies share information, not how template generators stack sections.
+            </h2>
+          </div>
+          <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className="rounded-[1.75rem] border border-[#1f1a17]/10 bg-[#fffaf3] p-6 transition-transform duration-300 hover:-translate-y-1"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f0e2cf] text-[#a54d2d]">
+                  <feature.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-5 font-display text-2xl leading-tight">{feature.title}</h3>
+                <p className="mt-3 text-base leading-7 text-[#5f564e]">{feature.description}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="relative z-10 py-24 border-t border-border/50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Start free and scale as you grow. No hidden fees, no surprises.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Free Plan */}
-            <div className="relative p-8 rounded-2xl bg-card border border-border/50 hover:border-border transition-all duration-300">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">Free</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">₹0</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-6">
-                Perfect for trying out AgentHub and small projects.
-              </p>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "50 chats per month",
-                  "1 AI agent",
-                  "Website widget",
-                  "Basic analytics",
-                  
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-foreground">
-                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
-                      <Check className="w-3 h-3 text-muted-foreground" />
-                    </div>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/auth/sign-up" className="block">
-                <Button variant="outline" className="w-full py-6 bg-transparent hover:bg-secondary border-border">
-                  Get Started Free
-                </Button>
-              </Link>
+        <section id="pricing" className="border-t border-[#1f1a17]/10 bg-[#1f1a17] text-[#f3ebde]">
+          <div className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
+            <div className="max-w-3xl">
+              <p className="text-sm uppercase tracking-[0.28em] text-[#cbb8a7]">Pricing</p>
+              <h2 className="mt-4 font-display text-4xl leading-tight md:text-5xl">
+                Start small, then move clients into the workflow that matches their volume.
+              </h2>
             </div>
-
-            {/* Pro Plan */}
-            <div className="relative p-8 rounded-2xl bg-gradient-to-br from-primary/10 via-card to-accent/10 border-2 border-primary/50 hover:border-primary transition-all duration-300 scale-105">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-medium">
-                Most Popular
-              </div>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-primary mb-2">Pro</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">₹399</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-              </div>
-              <p className="text-muted-foreground mb-6">
-                For growing businesses that need more conversations.
-              </p>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "10,000 chats per month",
-                  "3 AI agents",
-                  "WhatsApp integration",
-                  "Advanced analytics",
-                  "Priority support",
-                  "Custom branding",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-foreground">
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-primary" />
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">
+              {plans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`rounded-[1.75rem] border p-7 ${
+                    plan.featured
+                      ? "border-[#cf7a4b] bg-[#2c241f]"
+                      : "border-white/10 bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.2em] text-[#d9c9bb]">{plan.name}</p>
+                      <p className="mt-3 font-display text-5xl">{plan.price}</p>
+                      <p className="mt-3 text-sm text-[#cbb8a7]">{plan.description}</p>
                     </div>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/auth/sign-up?plan=pro" className="block">
-                <Button className="w-full py-6 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/25">
-                  Start Pro Trial
-                </Button>
-              </Link>
-            </div>
-
-            {/* Pro+ Plan */}
-            <div className="relative p-8 rounded-2xl bg-card border border-border/50 hover:border-accent/50 transition-all duration-300">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-accent mb-2">Pro+</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">₹999</span>
-                  <span className="text-muted-foreground">/month</span>
+                    {plan.featured ? (
+                      <span className="rounded-full bg-[#cf7a4b] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#1f1a17]">
+                        Popular
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-8 space-y-3">
+                    {plan.items.map((item) => (
+                      <div key={item} className="flex items-center gap-3 text-sm text-[#f3ebde]">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
+                          <Check className="h-3.5 w-3.5" />
+                        </div>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Link href={plan.href} className="mt-8 block">
+                    <Button
+                      className={`w-full rounded-full py-6 ${
+                        plan.featured
+                          ? "bg-[#cf7a4b] text-[#1f1a17] hover:bg-[#da8a5d]"
+                          : "bg-[#f3ebde] text-[#1f1a17] hover:bg-[#fff7ef]"
+                      }`}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
                 </div>
-              </div>
-              <p className="text-muted-foreground mb-6">
-                Unlimited scale for enterprises and high-volume teams.
-              </p>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Unlimited chats",
-                  "Unlimited AI agents",
-                  "All integrations",
-                  "Custom AI training",
-                  "Dedicated support",
-                  "SLA guarantee",
-                  "API access",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-foreground">
-                    <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-accent" />
-                    </div>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/auth/sign-up?plan=pro_plus" className="block">
-                <Button variant="outline" className="w-full py-6 bg-transparent hover:bg-accent/10 border-accent/50 hover:border-accent">
-                  Contact Sales
-                </Button>
-              </Link>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className="relative z-10 py-24 border-t border-border/50">
-        <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-balance">
-              Ready to Transform Your Customer Support?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              Join thousands of businesses using AgentHub to provide instant, 
-              intelligent support to their customers.
-            </p>
-            <Link href="/auth/sign-up">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-10 py-6 text-lg shadow-2xl shadow-primary/30">
-                Start Building for Free
-                <ArrowRight className="w-5 h-5 ml-2" />
+        <section className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
+          <div className="rounded-[2rem] border border-[#1f1a17]/10 bg-[#fffaf3] p-8 sm:p-10 lg:flex lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm uppercase tracking-[0.28em] text-[#8a7665]">Ready to refine the brand</p>
+              <h2 className="mt-4 font-display text-4xl leading-tight md:text-5xl">
+                Launch the product with a look that feels operational, trustworthy, and human-made.
+              </h2>
+            </div>
+            <Link href="/auth/sign-up" className="mt-8 block lg:mt-0">
+              <Button size="lg" className="rounded-full bg-[#1f1a17] px-8 text-[#f7f1e8] hover:bg-[#3b312b]">
+                Create your workspace
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border/50 py-12">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-semibold text-foreground">AgentHub</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              2026 AgentHub. All rights reserved.
-            </p>
-          </div>
+      <footer className="relative z-10 border-t border-[#1f1a17]/10">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-[#6e6257] lg:flex-row lg:items-center lg:justify-between lg:px-10">
+          <Link href="/auth/sign-up">
+            <span className="font-display text-xl font-semibold text-[#1f1a17]">AgentHub</span>
+          </Link>
+          <p>Human-looking design for a real AI operations product.</p>
         </div>
       </footer>
     </div>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { DateFilter } from "@/components/dashboard/date-filter";
 import {
   Card,
   CardContent,
@@ -24,7 +25,11 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ date?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,12 +39,28 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
+  const { date } = (await searchParams) || {};
+  const selectedDate = date ? new Date(date) : null;
+  const hasSelectedDate = !!selectedDate && !Number.isNaN(selectedDate.getTime());
+  const rangeStart = hasSelectedDate ? new Date(selectedDate!) : null;
+  const rangeEnd = hasSelectedDate ? new Date(selectedDate!) : null;
+
+  if (rangeStart) rangeStart.setHours(0, 0, 0, 0);
+  if (rangeEnd) rangeEnd.setHours(23, 59, 59, 999);
+
   // Get company with plan info
   const { data: company } = await supabase
     .from("companies")
     .select("*")
     .eq("user_id", user.id)
     .single();
+
+  const { data: companyConversations } = await supabase
+    .from("conversations")
+    .select("id, started_at")
+    .eq("company_id", company?.id);
+
+  const conversationIds = (companyConversations || []).map((conversation) => conversation.id);
 
   // Get stats
   const { count: documentCount } = await supabase
@@ -52,10 +73,41 @@ export default async function DashboardPage() {
     .select("*", { count: "exact", head: true })
     .eq("company_id", company?.id);
 
-  const { count: messageCount } = await supabase
-    .from("messages")
+  const { count: messageCount } = conversationIds.length
+    ? await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", conversationIds)
+    : { count: 0 };
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const { count: monthConversationCount } = await supabase
+    .from("conversations")
     .select("*", { count: "exact", head: true })
-    .eq("company_id", company?.id);
+    .eq("company_id", company?.id)
+    .gte("started_at", startOfMonth.toISOString());
+
+  const { count: filteredConversationCount } = hasSelectedDate
+    ? await supabase
+        .from("conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", company?.id)
+        .gte("started_at", rangeStart!.toISOString())
+        .lte("started_at", rangeEnd!.toISOString())
+    : { count: conversationCount };
+
+  const { count: assistantMessageCount } = conversationIds.length
+    ? await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "assistant")
+        .in("conversation_id", conversationIds)
+        .gte("created_at", hasSelectedDate ? rangeStart!.toISOString() : startOfMonth.toISOString())
+        .lte("created_at", hasSelectedDate ? rangeEnd!.toISOString() : new Date().toISOString())
+    : { count: 0 };
 
   const { data: whatsappConfig } = await supabase
     .from("whatsapp_config")
@@ -63,7 +115,7 @@ export default async function DashboardPage() {
     .eq("company_id", company?.id)
     .single();
 
-  const chatCount = company?.chat_count || 0;
+  const chatCount = monthConversationCount ?? company?.chat_count ?? 0;
   const chatLimit = company?.chat_limit || 50;
   const chatUsagePercent = chatLimit === -1 ? 0 : (chatCount / chatLimit) * 100;
 
@@ -104,6 +156,7 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">
           Here&apos;s an overview of your AI agent&apos;s performance
         </p>
+        <DateFilter value={hasSelectedDate ? date : null} />
       </div>
 
       {/* Stats Grid */}
@@ -118,7 +171,7 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{conversationCount || 0}</div>
+            <div className="text-3xl font-bold text-foreground">{filteredConversationCount || 0}</div>
             <Link
               href="/dashboard/conversations"
               className="text-xs text-primary hover:text-primary/80 inline-flex items-center gap-1 mt-2"
@@ -131,15 +184,17 @@ export default async function DashboardPage() {
         <Card className="bg-card border-border/50 hover:border-accent/30 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Messages Sent
+              AI Responses Delivered
             </CardTitle>
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
               <Bot className="h-5 w-5 text-accent" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{messageCount || 0}</div>
-            <p className="text-xs text-muted-foreground mt-2">AI responses delivered</p>
+            <div className="text-3xl font-bold text-foreground">{assistantMessageCount || 0}</div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {hasSelectedDate ? "Selected day" : "All time"}
+            </p>
           </CardContent>
         </Card>
 

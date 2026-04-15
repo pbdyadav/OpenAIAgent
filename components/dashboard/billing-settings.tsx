@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Check, Sparkles, Zap, Crown, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, ArrowRight, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Company {
@@ -16,6 +17,7 @@ interface Company {
 
 interface BillingSettingsProps {
   company: Company;
+  usageCount?: number;
 }
 
 const plans = [
@@ -27,7 +29,7 @@ const plans = [
     description: "Perfect for trying out AgentHub",
     features: ["50 chats per month", "1 AI agent", "Website widget", "Basic analytics", "Email support"],
     icon: Sparkles,
-    color: "muted-foreground",
+    color: "text-muted-foreground",
     bg: "bg-muted/50",
     border: "border-border/50",
   },
@@ -39,7 +41,7 @@ const plans = [
     description: "For growing businesses",
     features: ["10,000 chats per month", "1 AI agents", "Website widget", "WhatsApp integration", "Advanced analytics", "Priority support", "Custom branding"],
     icon: Zap,
-    color: "primary",
+    color: "text-primary",
     bg: "bg-primary/10",
     border: "border-primary/30",
     popular: true,
@@ -52,15 +54,16 @@ const plans = [
     description: "Unlimited scale for enterprises",
     features: ["Unlimited chats", "1 AI agents", "All integrations", "Custom AI training", "Dedicated support", "SLA guarantee", "API access"],
     icon: Crown,
-    color: "accent",
+    color: "text-accent",
     bg: "bg-accent/10",
     border: "border-accent/30",
   },
 ];
 
-export function BillingSettings({ company }: BillingSettingsProps) {
+export function BillingSettings({ company, usageCount }: BillingSettingsProps) {
   const currentPlan = plans.find(p => p.id === company.plan) || plans[0];
-  const chatUsagePercent = company.chat_limit === -1 ? 0 : (company.chat_count / company.chat_limit) * 100;
+  const currentUsage = usageCount ?? company.chat_count;
+  const chatUsagePercent = company.chat_limit === -1 ? 0 : (currentUsage / company.chat_limit) * 100;
 
   return (
     <div className="space-y-8">
@@ -70,7 +73,7 @@ export function BillingSettings({ company }: BillingSettingsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", currentPlan.bg)}>
-                <currentPlan.icon className={cn("w-5 h-5", `text-${currentPlan.color}`)} />
+                <currentPlan.icon className={cn("w-5 h-5", currentPlan.color)} />
               </div>
               <div>
                 <CardTitle className="text-foreground">Current Plan: {currentPlan.name}</CardTitle>
@@ -90,7 +93,7 @@ export function BillingSettings({ company }: BillingSettingsProps) {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">Chat usage this month</span>
               <span className="text-sm font-medium text-foreground">
-                {company.chat_limit === -1 ? "Unlimited" : `${company.chat_count} / ${company.chat_limit}`}
+                {company.chat_limit === -1 ? "Unlimited" : `${currentUsage} / ${company.chat_limit}`}
               </span>
             </div>
             {company.chat_limit !== -1 && (
@@ -145,7 +148,7 @@ export function BillingSettings({ company }: BillingSettingsProps) {
                 <CardHeader className="pt-8">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", plan.bg)}>
-                      <PlanIcon className={cn("w-4 h-4", `text-${plan.color}`)} />
+                      <PlanIcon className={cn("w-4 h-4", plan.color)} />
                     </div>
                     <CardTitle className="text-lg text-foreground">{plan.name}</CardTitle>
                   </div>
@@ -160,7 +163,7 @@ export function BillingSettings({ company }: BillingSettingsProps) {
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-foreground">
                         <div className={cn("w-4 h-4 rounded-full flex items-center justify-center", plan.bg)}>
-                          <Check className={cn("w-2.5 h-2.5", `text-${plan.color}`)} />
+                          <Check className={cn("w-2.5 h-2.5", plan.color)} />
                         </div>
                         {feature}
                       </li>
@@ -171,18 +174,22 @@ export function BillingSettings({ company }: BillingSettingsProps) {
                       Current Plan
                     </Button>
                   ) : (
-                    <Button 
+                    <Button
+                      asChild
                       className={cn(
                         "w-full",
-                        plan.id === "pro" 
+                        plan.id === "pro"
                           ? "bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
-                          : "bg-secondary hover:bg-secondary/80 text-foreground"
+                          : "bg-secondary hover:bg-secondary/80 text-foreground",
                       )}
                     >
-                      {plans.findIndex(p => p.id === company.plan) < plans.findIndex(p => p.id === plan.id) 
-                        ? "Upgrade" 
-                        : "Downgrade"}
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      <Link href={`/api/billing/checkout?plan=${plan.id}`}>
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        {plans.findIndex(p => p.id === company.plan) < plans.findIndex(p => p.id === plan.id)
+                          ? "Upgrade"
+                          : "Downgrade"}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
                     </Button>
                   )}
                 </CardContent>
