@@ -3,11 +3,47 @@ import fs from "fs";
 import path from "path";
 
 export async function POST() {
+  const serviceUrl = process.env.WHATSAPP_SERVICE_URL || process.env.NEXT_PUBLIC_WHATSAPP_SERVICE_URL;
+
+  if (serviceUrl) {
+    try {
+      const disconnectUrl = new URL("/disconnect", serviceUrl).toString();
+      const res = await fetch(disconnectUrl, {
+        method: "POST",
+        cache: "no-store",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: data.error || "Failed to disconnect WhatsApp service",
+          },
+          { status: res.status }
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error("WhatsApp disconnect proxy error:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to reach WhatsApp service",
+        },
+        { status: 502 }
+      );
+    }
+  }
+
   try {
+    const globalAny = globalThis as any;
 
     // destroy client
-    if ((globalThis as any).client) {
-      await (globalThis as any).client.destroy();
+    if (globalAny.whatsapp?.client) {
+      await globalAny.whatsapp.client.destroy();
     }
 
     // 🔥 delete session folders
@@ -22,9 +58,12 @@ export async function POST() {
       fs.rmSync(cachePath, { recursive: true, force: true });
     }
 
-    (globalThis as any).whatsappStatus = "disconnected";
-    (globalThis as any).latestQR = null;
-    (globalThis as any).client = null;
+    if (globalAny.whatsapp) {
+      globalAny.whatsapp.status = "disconnected";
+      globalAny.whatsapp.qr = null;
+      globalAny.whatsapp.started = false;
+      globalAny.whatsapp.client = null;
+    }
 
     return NextResponse.json({ success: true });
 

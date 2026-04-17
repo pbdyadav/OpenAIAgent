@@ -81,7 +81,7 @@ export default function LoginPage() {
             <div className="mb-8">
               <BrandLogo imageClassName="h-10 w-auto" />
             </div>
-            <p className="text-sm uppercase tracking-[0.26em] text-[#8a7665]">Sign in</p>
+            <p className="text-sm uppercase tracking-[0.26em] text-[#8a7665]">Sign in0</p>
             <h1 className="mt-4 font-display text-5xl leading-tight">
               Come back to the workspace where each company gets its own AI support setup.
             </h1>

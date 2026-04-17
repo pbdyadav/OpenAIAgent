@@ -105,8 +105,6 @@ export default async function DashboardPage({
         .select("*", { count: "exact", head: true })
         .eq("role", "assistant")
         .in("conversation_id", conversationIds)
-        .gte("created_at", hasSelectedDate ? rangeStart!.toISOString() : startOfMonth.toISOString())
-        .lte("created_at", hasSelectedDate ? rangeEnd!.toISOString() : new Date().toISOString())
     : { count: 0 };
 
   const { data: whatsappConfig } = await supabase
@@ -115,7 +113,7 @@ export default async function DashboardPage({
     .eq("company_id", company?.id)
     .single();
 
-  const chatCount = monthConversationCount ?? company?.chat_count ?? 0;
+  const chatCount = filteredConversationCount ?? conversationCount ?? company?.chat_count ?? 0;
   const chatLimit = company?.chat_limit || 50;
   const chatUsagePercent = chatLimit === -1 ? 0 : (chatCount / chatLimit) * 100;
 

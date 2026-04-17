@@ -12,9 +12,9 @@ export function BrandLogo({ className, imageClassName }: BrandLogoProps) {
       <Image
         src="/logo.png"
         alt="AgentHub"
-        width={180}
-        height={56}
-        className={cn("h-11 w-auto object-contain", imageClassName)}
+        width={220}
+        height={72}
+        className={cn("h-14 w-auto object-contain", imageClassName)}
         priority
       />
     </div>

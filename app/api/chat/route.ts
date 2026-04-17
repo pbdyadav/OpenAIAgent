@@ -19,18 +19,56 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { companySlug, message, visitorId } = body;
 
-    if (!companySlug || !message || !visitorId) {
+    if (!message || !visitorId) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400, headers: corsHeaders });
     }
 
     const supabase = await createClient();
 
+    async function insertMessageWithFallback(payload: Record<string, unknown>) {
+      const primary = await supabase.from("messages").insert(payload);
+
+      if (!primary.error) {
+        return primary;
+      }
+
+      const errorText = `${primary.error.code || ""} ${primary.error.message || ""}`.toLowerCase();
+
+      if (
+        "company_id" in payload &&
+        (errorText.includes("company_id") ||
+          errorText.includes("column") ||
+          errorText.includes("does not exist"))
+      ) {
+        const { company_id, ...fallbackPayload } = payload as any;
+        return await supabase.from("messages").insert(fallbackPayload);
+      }
+
+      return primary;
+    }
+
     // 1. Find Company
-    const { data: company, error: companyError } = await supabase
-      .from("companies")
-      .select("*")
-      .eq("slug", companySlug)
-      .maybeSingle();
+    let companyQuery = supabase.from("companies").select("*");
+
+    if (companySlug) {
+      companyQuery = companyQuery.eq("slug", companySlug);
+    } else {
+      companyQuery = companyQuery.order("created_at", { ascending: false }).limit(1);
+    }
+
+    let { data: company, error: companyError } = await companyQuery.maybeSingle();
+
+    if ((!company || companyError) && companySlug) {
+      const fallbackCompany = await supabase
+        .from("companies")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      company = fallbackCompany.data;
+      companyError = fallbackCompany.error;
+    }
 
     if (companyError || !company) {
       return NextResponse.json(
@@ -44,11 +82,18 @@ export async function POST(req: Request) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { count } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("company_id", company.id)
-      .gte("created_at", startOfMonth.toISOString());
+    let count: number | null = null;
+    try {
+      const countResult = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", company.id)
+        .gte("created_at", startOfMonth.toISOString());
+
+      count = countResult.count ?? 0;
+    } catch (countError) {
+      console.error("Message count query failed:", countError);
+    }
 
     if (company.chat_limit !== -1 && (count ?? 0) >= company.chat_limit) {
       return NextResponse.json(
@@ -81,12 +126,16 @@ export async function POST(req: Request) {
     const currentConvId = conversation!.id;
 
     // 4. Save User Message
-    await supabase.from("messages").insert({
+    const userMessageInsert = await insertMessageWithFallback({
       company_id: company.id,
       conversation_id: currentConvId,
       role: "user",
       content: message,
     });
+
+    if (userMessageInsert.error) {
+      throw userMessageInsert.error;
+    }
 
     // 4.5 Fetch Company Knowledge
     const { data: knowledgeDocs } = await supabase
@@ -138,7 +187,11 @@ const chatHistory: Content[] = (historyData || [])
     parts: [{ text: m.content }],
   }));
 
-let aiResponse = "I'm currently unavailable.";
+const fallbackResponse =
+  company.settings?.widget?.welcome_message ||
+  `Thanks for reaching out to ${company.name}. Our team will get back to you shortly.`;
+
+let aiResponse = fallbackResponse;
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -176,17 +229,21 @@ ${companyKnowledge}
 
     console.error("Gemini Error:", err);
 
-    aiResponse = "Our AI assistant is temporarily busy. Please try again.";
+    aiResponse = fallbackResponse;
 
   }
 }
     // 5. Save AI Response
-    await supabase.from("messages").insert({
+    const aiMessageInsert = await insertMessageWithFallback({
       company_id: company.id,
       conversation_id: currentConvId,
       role: "assistant",
       content: aiResponse,
     });
+
+    if (aiMessageInsert.error) {
+      throw aiMessageInsert.error;
+    }
 
     await supabase.rpc("increment_chat_count", {
       company_id: company.id,

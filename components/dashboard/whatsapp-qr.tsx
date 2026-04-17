@@ -3,40 +3,54 @@
 import { useEffect, useState } from "react";
 
 export default function WhatsAppQR() {
-
     const [qr, setQr] = useState<string | null>(null);
     const [status, setStatus] = useState("loading");
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        let active = true;
 
-        const interval = setInterval(async () => {
-
+        const loadQR = async () => {
             try {
-                const res = await fetch("/api/whatsapp/qr");
+                const res = await fetch("/api/whatsapp/qr", {
+                    cache: "no-store",
+                });
                 const data = await res.json();
 
-                console.log("STATUS:", data.status); // ✅ YAHAN
+                if (!active) return;
 
-                setStatus(data.status);
+                const nextStatus = data.status || "idle";
+                setStatus(nextStatus);
 
-                if (data.status === "connected") {
+                if (nextStatus === "connected") {
+                    setError(null);
                     setQr(null);
-                    clearInterval(interval);
                     return;
                 }
 
-                if (data.qr) {
-                    setQr(data.qr);
+                if (nextStatus === "error") {
+                    setQr(null);
+                    setError(data.error || "WhatsApp QR service unavailable");
+                    return;
                 }
 
+                setError(null);
+                setQr(data.qr || null);
             } catch (err) {
+                if (!active) return;
                 console.error("QR fetch error:", err);
+                setError("Unable to load WhatsApp QR. Check service URL and ngrok tunnel.");
+                setStatus("error");
             }
+        };
 
-        }, 2000);
+        loadQR();
+        const interval = setInterval(loadQR, 2500);
 
-        return () => clearInterval(interval);
-
+        return () => {
+            active = false;
+            clearInterval(interval);
+        };
     }, []);
 
     // =========================
@@ -91,6 +105,19 @@ export default function WhatsAppQR() {
                 <p className="text-red-500">WhatsApp disconnected</p>
                 <p className="text-sm text-muted-foreground mt-2">
                     Refresh page to reconnect
+                </p>
+            </div>
+        );
+    }
+
+    if (status === "error") {
+        return (
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-center">
+                <p className="text-sm font-medium text-destructive">
+                    {error || "WhatsApp QR service unavailable"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                    Make sure the WhatsApp service is running and the ngrok URL is set in the main app env.
                 </p>
             </div>
         );
