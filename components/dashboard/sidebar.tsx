@@ -75,7 +75,7 @@ export function DashboardSidebar({ company, user, usageCount }: DashboardSidebar
       {/* Logo */}
       <div className="p-5 border-b border-border/50">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <BrandLogo imageClassName="h-8 w-auto" />
+          <BrandLogo imageClassName="h-20 w-auto" />
         </Link>
       </div>
 

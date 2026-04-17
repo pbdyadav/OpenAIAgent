@@ -14,7 +14,7 @@ export function BrandLogo({ className, imageClassName }: BrandLogoProps) {
         alt="AgentHub"
         width={220}
         height={72}
-        className={cn("h-14 w-auto object-contain", imageClassName)}
+        className={cn("h-20 w-auto object-contain", imageClassName)}
         priority
       />
     </div>

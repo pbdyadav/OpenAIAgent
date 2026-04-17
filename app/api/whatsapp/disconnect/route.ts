@@ -38,6 +38,16 @@ export async function POST() {
     }
   }
 
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "WHATSAPP_SERVICE_URL is not set on this production deployment",
+      },
+      { status: 400 }
+    );
+  }
+
   try {
     const globalAny = globalThis as any;
 

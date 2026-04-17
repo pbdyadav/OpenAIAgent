@@ -27,10 +27,11 @@ export async function GET() {
     }
   }
 
-  if (process.env.VERCEL) {
+  if (process.env.NODE_ENV === "production") {
     return NextResponse.json({
       qr: null,
       status: "disabled",
+      error: "WHATSAPP_SERVICE_URL is not set on this production deployment",
     });
   }
 
