@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { Download, MessageSquare, Smartphone, Globe, User, Bot } from "lucide-react";
+import { Download, MessageSquare, Smartphone, Globe, User, Bot, Mic } from "lucide-react";
 
 import { DateFilter } from "@/components/dashboard/date-filter";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ type ThreadMessage = {
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  type?: string;
+  transcript?: string | null;
 };
 
 export type ConversationRow = {
@@ -259,9 +261,19 @@ export function ConversationsBoard({
                             {format(parseISO(message.created_at), "PPP p")}
                           </span>
                         </div>
-                        <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-                          {message.content}
-                        </p>
+                        {message.type === "audio" ? (
+                          <div className="flex items-start gap-2 p-3 bg-background/50 rounded-xl border border-border/40">
+                            <Mic className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Voice Note Transcript</p>
+                              <p className="text-sm italic text-foreground">{message.transcript || "Transcription pending or failed."}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">
+                            {message.content}
+                          </p>
+                        )}
                       </div>
                     ))
                   )}

@@ -75,12 +75,14 @@ export default async function ConversationsPage({
     role: "user" | "assistant";
     content: string;
     created_at: string;
+    type?: string;
+    transcript?: string | null;
   };
 
   const { data: messages } = conversationIds.length
     ? await supabase
         .from("messages")
-        .select("id, conversation_id, role, content, created_at")
+        .select("id, conversation_id, role, content, created_at, type, transcript")
         .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
     : { data: [] as ThreadMessage[] };

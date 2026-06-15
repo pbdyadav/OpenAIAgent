@@ -18,6 +18,8 @@ import {
   Sparkles,
   Zap,
   Crown,
+  Package,
+  Phone,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -39,10 +41,12 @@ interface DashboardSidebarProps {
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/knowledge", label: "Knowledge Base", icon: FileText },
+  { href: "/dashboard/catalog", label: "Catalog", icon: Package },
   { href: "/dashboard/conversations", label: "Conversations", icon: MessageSquare },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/widget", label: "Widget", icon: Code },
   { href: "/dashboard/whatsapp", label: "WhatsApp", icon: Smartphone },
+  { href: "/dashboard/voice", label: "Voice", icon: Phone },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

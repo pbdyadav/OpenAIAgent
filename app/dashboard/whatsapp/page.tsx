@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import WhatsAppQR from "@/components/dashboard/whatsapp-qr";
-import { Smartphone, Sparkles } from "lucide-react";
+import WhatsAppConfigForm from "@/components/dashboard/whatsapp-config-form";
+import { Smartphone, Sparkles, Link2 } from "lucide-react";
+import { headers } from "next/headers";
 
 export default async function WhatsAppPage() {
 
@@ -33,6 +34,18 @@ export default async function WhatsAppPage() {
     );
   }
 
+  const { data: config } = await supabase
+    .from("whatsapp_config")
+    .select("*")
+    .eq("company_id", company.id)
+    .maybeSingle();
+
+  // Construct webhook url
+  const headersList = await headers();
+  const host = headersList.get("host") || "your-domain.com";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const webhookUrl = `${protocol}://${host}/api/webhooks/whatsapp`;
+
   return (
     <div className="space-y-8">
 
@@ -50,7 +63,7 @@ export default async function WhatsAppPage() {
             </h1>
 
             <p className="text-muted-foreground">
-              Connect your WhatsApp to allow AI to reply to customers automatically.
+              Connect to the official Meta WhatsApp Cloud API.
             </p>
           </div>
 
@@ -62,19 +75,31 @@ export default async function WhatsAppPage() {
         <Sparkles className="w-5 h-5 text-accent" />
 
         <p className="text-sm text-foreground">
-          Once connected, your AI agent will automatically reply to WhatsApp messages using your Knowledge Base.
+          Your AI agent will automatically reply to incoming WhatsApp webhooks using your Knowledge Base.
         </p>
       </div>
 
-      {/* QR Section */}
-      <div className="p-6 bg-card rounded-xl border flex flex-col items-center gap-4">
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="p-6 bg-card rounded-xl border flex flex-col gap-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Link2 className="w-5 h-5 text-muted-foreground" />
+            Meta API Configuration
+          </h2>
+          <WhatsAppConfigForm companyId={company.id} initialConfig={config} />
+        </div>
 
-        <p className="text-sm text-muted-foreground">
-          Scan this QR code using WhatsApp → Linked Devices
-        </p>
-
-        <WhatsAppQR />
-
+        <div className="p-6 bg-card rounded-xl border flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Webhook URL</h2>
+          <p className="text-sm text-muted-foreground">
+            Provide this URL to your Meta App when setting up the WhatsApp Webhook subscription.
+          </p>
+          <div className="p-3 bg-muted rounded-md border text-sm break-all font-mono">
+            {webhookUrl}
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            If testing locally, use a tool like ngrok to expose your localhost to the internet.
+          </p>
+        </div>
       </div>
 
     </div>
